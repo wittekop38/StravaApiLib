@@ -1,5 +1,7 @@
 # StravaApiLib
 
+[![NuGet](https://img.shields.io/nuget/v/StravaApiLib?color=brightgreen)](https://www.nuget.org/packages/StravaApiLib)
+
 A lightweight .NET wrapper for the Strava API.
 
 This library simplifies working with the Strava API by handling:
