@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.37216.2 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StravaApiLib", "StravaApiLib.csproj", "{9CBF47DA-0875-43E8-B82F-EF5A9D9AF267}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StravaApiLib.Debug", "..\StravaApiLib.Debug\StravaApiLib.Debug.csproj", "{CFF89476-54C0-4B32-8E89-9898E7CE999D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9CBF47DA-0875-43E8-B82F-EF5A9D9AF267}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9CBF47DA-0875-43E8-B82F-EF5A9D9AF267}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9CBF47DA-0875-43E8-B82F-EF5A9D9AF267}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9CBF47DA-0875-43E8-B82F-EF5A9D9AF267}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CFF89476-54C0-4B32-8E89-9898E7CE999D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CFF89476-54C0-4B32-8E89-9898E7CE999D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CFF89476-54C0-4B32-8E89-9898E7CE999D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CFF89476-54C0-4B32-8E89-9898E7CE999D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D50E9292-1627-411A-9363-82F7EDB3287C}
+	EndGlobalSection
+EndGlobal
