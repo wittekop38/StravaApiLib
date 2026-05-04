@@ -7,13 +7,10 @@ using System.Text.Json.Serialization;
 
 namespace StravaApiLib.DTOs
 {
-    public class SegmentDto
+    public class SummarySegment
     {
         [JsonPropertyName("id")]
         public long Id { get; set; }
-
-        [JsonPropertyName("resource_state")]
-        public int ResourceState { get; set; }
 
         [JsonPropertyName("name")]
         public string Name { get; set; }
@@ -57,10 +54,10 @@ namespace StravaApiLib.DTOs
         [JsonPropertyName("private")]
         public bool Private { get; set; }
 
-        [JsonPropertyName("hazardous")]
-        public bool Hazardous { get; set; }
+        [JsonPropertyName("athlete_pr_effort")]
+        public SummaryPRSegmentEffort AthletePrEffort { get; set; }
 
-        [JsonPropertyName("starred")]
-        public bool Starred { get; set; }
+        [JsonPropertyName("athlete_segment_stats")]
+        public SummarySegmentEffort AthleteSegmentStats { get; set; }
     }
 }

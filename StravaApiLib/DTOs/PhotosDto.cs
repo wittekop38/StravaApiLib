@@ -9,8 +9,10 @@ namespace StravaApiLib.DTOs
 {
     public class PhotosDto
     {
+        [JsonPropertyName("primary")]
         public PrimaryPhotoDto Primary { get; set; }
-        public bool UsePrimaryPhoto { get; set; }
+
+        [JsonPropertyName("count")]
         public int Count { get; set; }
     }
 

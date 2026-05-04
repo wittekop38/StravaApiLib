@@ -17,8 +17,5 @@ namespace StravaApiLib.DTOs
 
         [JsonPropertyName("polyline")]
         public string Polyline { get; set; }
-
-        [JsonPropertyName("resource_state")]
-        public int ResourceState { get; set; }
     }
 }
