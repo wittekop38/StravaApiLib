@@ -76,9 +76,9 @@ namespace StravaApiLib.DTOs
         public double? Weight { get; set; } // can be null
 
         [JsonPropertyName("bikes")]
-        public List<GearDto> Bikes { get; set; }
+        public List<SummaryGearDto> Bikes { get; set; }
 
         [JsonPropertyName("shoes")]
-        public List<GearDto> Shoes { get; set; }
+        public List<SummaryGearDto> Shoes { get; set; }
     }
 }
