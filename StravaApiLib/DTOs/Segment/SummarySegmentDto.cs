@@ -5,9 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Text.Json.Serialization;
 
-namespace StravaApiLib.DTOs
+namespace StravaApiLib.DTOs.Segment
 {
-    public class SummarySegment
+    public class SummarySegmentDto
     {
         [JsonPropertyName("id")]
         public long Id { get; set; }
@@ -55,9 +55,9 @@ namespace StravaApiLib.DTOs
         public bool Private { get; set; }
 
         [JsonPropertyName("athlete_pr_effort")]
-        public SummaryPRSegmentEffort AthletePrEffort { get; set; }
+        public SummaryPRSegmentEffortDto AthletePrEffort { get; set; }
 
         [JsonPropertyName("athlete_segment_stats")]
-        public SummarySegmentEffort AthleteSegmentStats { get; set; }
+        public SummarySegmentEffortDto AthleteSegmentStats { get; set; }
     }
 }

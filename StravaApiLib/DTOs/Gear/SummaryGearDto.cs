@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace StravaApiLib.DTOs
+namespace StravaApiLib.DTOs.Gear
 {
     public class SummaryGearDto
     {

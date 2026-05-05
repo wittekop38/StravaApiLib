@@ -5,9 +5,9 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace StravaApiLib.DTOs
+namespace StravaApiLib.DTOs.Segment
 {
-    public class SummaryPRSegmentEffort
+    public class SummaryPRSegmentEffortDto
     {
         [JsonPropertyName("pr_activity_id")]
         public long PrActivityId { get; set; }

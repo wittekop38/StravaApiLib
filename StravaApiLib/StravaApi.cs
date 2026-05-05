@@ -1,4 +1,6 @@
-﻿using StravaApiLib.DTOs;
+﻿using StravaApiLib.DTOs.Activities;
+using StravaApiLib.DTOs.Athletes;
+using StravaApiLib.DTOs.Gear;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;

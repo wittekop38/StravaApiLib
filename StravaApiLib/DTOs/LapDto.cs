@@ -1,4 +1,6 @@
-﻿using System;
+﻿using StravaApiLib.DTOs.Activities;
+using StravaApiLib.DTOs.Athletes;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
