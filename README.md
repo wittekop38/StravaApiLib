@@ -27,8 +27,9 @@ This library simplifies working with the Strava API by handling:
 - Activities (paginated)
 - Activity details
 - Gear details
+- Routes
 
-More endpoints may be added in future updates.
+More endpoints will be added in future updates.
 
 
 
