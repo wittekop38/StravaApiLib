@@ -1,11 +1,13 @@
-﻿using System;
+﻿using StravaApiLib.DTOs.Activities;
+using StravaApiLib.DTOs.Athletes;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace StravaApiLib.DTOs
+namespace StravaApiLib.DTOs.Segment
 {
     public class SegmentEffortDto
     {
@@ -64,7 +66,7 @@ namespace StravaApiLib.DTOs
         public float? MaxHeartrate { get; set; }
 
         [JsonPropertyName("segment")]
-        public SummarySegment Segment { get; set; }
+        public SummarySegmentDto Segment { get; set; }
 
         [JsonPropertyName("kom_rank")]
         public int? KomRank { get; set; }

@@ -4,8 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Text.Json.Serialization;
+using StravaApiLib.DTOs.Gear;
 
-namespace StravaApiLib.DTOs
+namespace StravaApiLib.DTOs.Athletes
 {
     public class AthleteDto
     {

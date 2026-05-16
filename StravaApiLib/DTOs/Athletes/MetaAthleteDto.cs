@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace StravaApiLib.DTOs
+namespace StravaApiLib.DTOs.Athletes
 {
     public class MetaAthleteDto
     {

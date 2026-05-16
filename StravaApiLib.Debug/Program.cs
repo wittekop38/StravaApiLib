@@ -16,6 +16,9 @@
             var athlete = await program.GetAthleteAsync();
             var activities = await program.GetActivitiesAsync();
             var detailsActivity = await program.GetActivityDetailsAsync(activities.FirstOrDefault().Id, true);
+
+            var routes = await program.GetRoutesByAthleteIdAsync(athlete.Id);
+            var specificRoute = await program.GetRouteAsync(routes.FirstOrDefault().Id);
         }
     }
 }
