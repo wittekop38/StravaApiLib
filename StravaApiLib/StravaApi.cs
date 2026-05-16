@@ -1,6 +1,7 @@
 ﻿using StravaApiLib.DTOs.Activities;
 using StravaApiLib.DTOs.Athletes;
 using StravaApiLib.DTOs.Gear;
+using StravaApiLib.DTOs.Routes;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -96,7 +97,8 @@ namespace StravaApiLib
         }
 
         /// <summary>
-        /// Gets a paginated list of the authenticated athlete's activities.
+        /// Returns the activities of an athlete for a specific identifier. Requires activity:read. 
+        /// Only Me activities will be filtered out unless requested by a token with activity:read_all.
         /// </summary>
         /// <param name="page">Page number (1-based).</param>
         /// <param name="perPage">Number of items per page.</param>
@@ -120,13 +122,12 @@ namespace StravaApiLib
         /// <returns>An <see cref="ActivityDetailsDto"/> describing the activity.</returns>
         public async Task<ActivityDetailsDto> GetActivityDetailsAsync(long activityId, bool includeAllEfforts = false)
         {
-            var url = $"activities/{activityId}?include_all_efforts={includeAllEfforts.ToString().ToLower()}";
-
-            return await GetAsync<ActivityDetailsDto>(url);
+            return await GetAsync<ActivityDetailsDto>($"activities/{activityId}?include_all_efforts={includeAllEfforts.ToString().ToLower()}");
         }
 
         /// <summary>
-        /// Gets the authenticated athlete profile.
+        /// Returns the currently authenticated athlete. 
+        /// Tokens with profile:read_all scope will receive a detailed athlete representation; all others will receive a summary representation.
         /// </summary>
         /// <returns>An <see cref="AthleteDto"/> describing the authenticated athlete.</returns>
         public async Task<AthleteDto> GetAthleteAsync()
@@ -135,9 +136,9 @@ namespace StravaApiLib
         }
 
         /// <summary>
-        /// Retrieves statistics for a specific athlete.
+        /// Returns the activity stats of an athlete. Only includes data from activities set to Everyone visibilty.
         /// </summary>
-        /// <param name="athleteId">Athlete identifier.</param>
+        /// <param name="athleteId">The identifier of the athlete. Must match the authenticated athlete.</param>
         /// <returns>An <see cref="AthleteStatsDto"/> containing aggregated statistics for the athlete.</returns>
         public async Task<AthleteStatsDto> GetAthleteStatsAsync(long athleteId)
         {
@@ -155,6 +156,28 @@ namespace StravaApiLib
             if (string.IsNullOrWhiteSpace(gearId)) throw new ArgumentException("Gear ID cannot be null or empty.", nameof(gearId));
 
             return await GetAsync<GearDto>($"gear/{gearId}");
+        }
+
+        /// <summary>
+        /// Returns a list of the routes created by the authenticated athlete. Private routes are filtered out unless requested by a token with read_all scope.
+        /// </summary>
+        /// <param name="athleteId">Athlete identifier.</param>
+        /// <param name="page">Page number. Defaults to 1.</param>
+        /// <param name="perPage">Number of items per page. Defaults to 30.</param>
+        /// <returns>A collection of <see cref="RouteDto"/> objects.</returns>
+        public async Task<List<RouteDto>> GetRoutesByAthleteIdAsync(long athleteId, int page = 1, int perPage = 30)
+        {
+            return await GetAsync<List<RouteDto>>($"athletes/{athleteId}/routes?page={page}&per_page={perPage}");
+        }
+
+        /// <summary>
+        /// Returns a route using its identifier. Requires read_all scope for private routes.
+        /// </summary>
+        /// <param name="routeId">Route identifier.</param>
+        /// <returns>An <see cref="RouteDto"/> object.</returns>
+        public async Task<RouteDto> GetRouteAsync(long routeId)
+        {
+            return await GetAsync<RouteDto>($"routes/{routeId}");
         }
 
         /// <summary>
