@@ -2,105 +2,117 @@
 
 [![NuGet](https://img.shields.io/nuget/v/StravaApiLib?color=brightgreen)](https://www.nuget.org/packages/StravaApiLib)
 
-A lightweight .NET wrapper for the Strava API v3.
-
-This library simplifies working with the Strava API by handling:
-- OAuth token refresh automatically
-- Secure API authentication
-- Typed DTO models
-- Clean and minimal API surface
-
-
-
-## 🚀 Features
-
-- Automatic access token refresh (uses refresh token internally)
-- Strongly typed DTOs
-- Simple async API methods
-- Minimal setup required after OAuth
-
-
-## 📦 Supported Endpoints
-
-- Athlete profile
-- Athlete statistics
-- Activities (paginated)
-- Activity details
-- Gear details
-- Routes
-
-More endpoints will be added in future updates.
-
-
-
-## 🔐 Authentication Overview
-
-Strava uses OAuth2 authentication.
-
-There are **two ways to use this library**:
-
-
-
-### Option 1: Using a Refresh Token
-
-Once you have a refresh token, you can use the API directly:
-
-```csharp
-var api = new StravaApi(clientId, clientSecret, refreshToken, 30);
-```
-
-### Option 2: Full OAuth Flow (First-time setup only)
-
-Use this if you do NOT yet have a refresh token.
-
-1. Generate authorization URL
-```csharp
-var url = StravaApi.GetAuthorizationUrl(clientId, redirectUri);
-```
-
-Open this URL in a browser and let the user log in.
-
-After approval, Strava will redirect to:
-https://your-redirect-uri?code=AUTH_CODE
-
-2. Exchange code for tokens
-```csharp
-var (accessToken, refreshToken) = await StravaApi.ExchangeCodeAsync(clientId, clientSecret, codeFromRedirect);
-```
-
-👉 Save the refreshToken — this is what you use long-term. The accessToken is short-lived and used internally by Strava for API requests.
-It is returned for completeness, but it is not required for using this library, since the library automatically manages token refresh internally.
-
-```csharp
-🏁 Example Usage
-var api = new StravaApi(clientId, clientSecret, refreshToken, 30);
-
-// Athlete
-var athlete = await api.GetAthleteAsync();
-
-// Activities
-var activities = await api.GetActivitiesAsync(page: 1, perPage: 30);
-
-// Activity details
-var activity = await api.GetActivityDetailsAsync(activityId);
-
-// Stats
-var stats = await api.GetAthleteStatsAsync(athlete.Id);
-
-// Gear
-var gear = await api.GetGearAsync(athlete.Shoes.First().Id);
-```
-
-## Installation
-
-Install via NuGet:
+A lightweight .NET client for the Strava API v3. Handles OAuth token refresh automatically so you can focus on building.
 
 ```bash
 dotnet add package StravaApiLib
 ```
 
-## ⚠️ Notes
-Access tokens are handled automatically internally
-Refresh tokens must be securely stored by the consumer
-Authorization codes are single-use and expire quickly
-Redirect URI must match your Strava app settings exactly
+---
+
+## Setup
+
+If you already have a refresh token, you're good to go:
+
+```csharp
+var api = new StravaApi(clientId, clientSecret, refreshToken);
+```
+
+If you're setting up for the first time, use the built-in OAuth helpers:
+
+```csharp
+// 1. Generate the authorization URL and open it in a browser
+var url = StravaApi.GetAuthorizationUrl(clientId, redirectUri);
+
+// 2. After the user approves, exchange the code Strava gives you
+var (accessToken, refreshToken) = await StravaApi.ExchangeCodeAsync(clientId, clientSecret, code);
+
+// Store the refreshToken — that's what you pass to the constructor going forward.
+// The library handles access token refresh automatically from there.
+```
+
+## 🚀 Features
+
+## Usage
+
+```csharp
+var api = new StravaApi(clientId, clientSecret, refreshToken);
+
+// Athlete
+var athlete = await api.GetAthleteAsync();
+var stats   = await api.GetAthleteStatsAsync(athlete.Id);
+var zones   = await api.GetAthleteZonesAsync();
+await api.UpdateAthleteAsync(weight: 75.5f);
+
+// Activities
+var activities = await api.GetActivitiesAsync(page: 1, perPage: 30);
+var detail     = await api.GetActivityDetailsAsync(activityId);
+var laps       = await api.GetActivityLapsAsync(activityId);
+var comments   = await api.GetActivityCommentsAsync(activityId);
+var kudos      = await api.GetActivityKudosAsync(activityId);
+var zones      = await api.GetActivityZonesAsync(activityId);
+
+await api.CreateActivityAsync("Morning Run", "Run", DateTime.Now, elapsedTimeSeconds: 3600);
+await api.UpdateActivityAsync(activityId, new UpdateActivityRequestDto { Name = "Evening Ride" });
+
+// Segments
+var segment = await api.GetSegmentAsync(segmentId);
+var starred = await api.GetStarredSegmentsAsync();
+var results = await api.ExploreSegmentsAsync("51.5,-0.1,51.6,0.1", activityType: "riding");
+await api.StarSegmentAsync(segmentId, starred: true);
+
+// Segment efforts
+var efforts = await api.GetSegmentEffortsAsync(segmentId);
+var effort  = await api.GetSegmentEffortAsync(effortId);
+
+// Streams
+var streams = await api.GetActivityStreamsAsync(activityId, StreamKeys.Time, StreamKeys.Heartrate, StreamKeys.Watts);
+double[] hrData = streams.Heartrate?.Data.Select(v => (double)v).ToArray();
+
+// Clubs
+var clubs    = await api.GetAthleteClubsAsync();
+var members  = await api.GetClubMembersAsync(clubId);
+
+// Routes
+var route = await api.GetRouteAsync(routeId);
+var gpx   = await api.GetRouteAsGpxAsync(routeId); // returns byte[]
+
+// Gear
+var gear = await api.GetGearAsync(gearId);
+
+// Uploads
+var upload = await api.CreateUploadAsync(fileStream, "activity.fit", "fit");
+var status = await api.GetUploadAsync(upload.Id); // poll until status.ActivityId != null
+```
+
+---
+
+## Endpoints
+
+Covers the full Strava API v3 reference:
+
+| Resource | Methods |
+|---|---|
+| Athletes | `GetAthleteAsync`, `UpdateAthleteAsync`, `GetAthleteStatsAsync`, `GetAthleteZonesAsync` |
+| Activities | `GetActivitiesAsync`, `GetActivityDetailsAsync`, `CreateActivityAsync`, `UpdateActivityAsync`, `GetActivityLapsAsync`, `GetActivityCommentsAsync`, `GetActivityKudosAsync`, `GetActivityZonesAsync` |
+| Segments | `GetSegmentAsync`, `GetStarredSegmentsAsync`, `StarSegmentAsync`, `ExploreSegmentsAsync` |
+| Segment Efforts | `GetSegmentEffortsAsync`, `GetSegmentEffortAsync` |
+| Streams | `GetActivityStreamsAsync`, `GetRouteStreamsAsync`, `GetSegmentEffortStreamsAsync`, `GetSegmentStreamsAsync` |
+| Clubs | `GetClubAsync`, `GetAthleteClubsAsync`, `GetClubActivitiesAsync`, `GetClubMembersAsync`, `GetClubAdminsAsync` |
+| Routes | `GetRouteAsync`, `GetRoutesByAthleteIdAsync`, `GetRouteAsGpxAsync`, `GetRouteAsTcxAsync` |
+| Gear | `GetGearAsync` |
+| Uploads | `CreateUploadAsync`, `GetUploadAsync` |
+
+---
+
+## Real-world example
+
+[StrideVault](https://github.com/wittekop38/StrideVault) is a personal project built on top of this library — good reference if you want to see it wired up end-to-end.
+
+---
+
+## Notes
+
+- Refresh tokens must be stored securely by the consuming app — the library doesn't persist anything
+- Authorization codes are single-use and short-lived
+- The redirect URI must exactly match what's registered in your Strava app settings
