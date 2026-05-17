@@ -31,7 +31,7 @@ var (accessToken, refreshToken) = await StravaApi.ExchangeCodeAsync(clientId, cl
 // The library handles access token refresh automatically from there.
 ```
 
-## 🚀 Features
+---
 
 ## Usage
 
@@ -113,6 +113,9 @@ Covers the full Strava API v3 reference:
 
 ## Notes
 
+- Refresh tokens must be stored securely by the consuming app — the library doesn't persist anything
+- Authorization codes are single-use and short-lived
+- The redirect URI must exactly match what's registered in your Strava app settings
 - Refresh tokens must be stored securely by the consuming app — the library doesn't persist anything
 - Authorization codes are single-use and short-lived
 - The redirect URI must exactly match what's registered in your Strava app settings
