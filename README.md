@@ -31,7 +31,7 @@ var (accessToken, refreshToken) = await StravaApi.ExchangeCodeAsync(clientId, cl
 // The library handles access token refresh automatically from there.
 ```
 
----
+## 🚀 Features
 
 ## Usage
 
