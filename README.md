@@ -116,6 +116,3 @@ Covers the full Strava API v3 reference:
 - Refresh tokens must be stored securely by the consuming app — the library doesn't persist anything
 - Authorization codes are single-use and short-lived
 - The redirect URI must exactly match what's registered in your Strava app settings
-- Refresh tokens must be stored securely by the consuming app — the library doesn't persist anything
-- Authorization codes are single-use and short-lived
-- The redirect URI must exactly match what's registered in your Strava app settings
