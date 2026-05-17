@@ -1,28 +1,28 @@
-﻿using StravaApiLib.DTOs.Activities;
-using StravaApiLib.DTOs.Athletes;
-using StravaApiLib.DTOs.Gear;
-using StravaApiLib.DTOs.Routes;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace StravaApiLib
 {
     /// <summary>
     /// Lightweight wrapper for the Strava API v3.
-    /// Handles authentication (OAuth refresh token flow) and API requests.
+    /// Handles authentication (OAuth refresh token flow) and all API requests.
     /// </summary>
     /// <remarks>
-    /// Usage (when consumed from a NuGet package):
-    /// - Install the package (for example: <c>Install-Package StravaApiLib</c>).
-    /// - Construct a <see cref="StravaApi"/> with your Strava application credentials and a refresh token,
-    ///   or use <see cref="GetAuthorizationUrl"/> and <see cref="ExchangeCodeAsync"/> to perform the OAuth flow.
-    /// See the <see cref="GetAuthorizationUrl(string, string)"/> example below for the authorization flow.
+    /// Construct with your Strava application credentials and a refresh token,
+    /// or use <see cref="GetAuthorizationUrl"/> and <see cref="ExchangeCodeAsync"/> to perform the initial OAuth flow.
     /// </remarks>
-    public class StravaApi
+    public partial class StravaApi
     {
         private const string BaseUrl = "https://www.strava.com/api/v3/";
         private const string OAuthUrl = "https://www.strava.com/oauth/token";
+
+        private static readonly JsonSerializerOptions _writeOptions = new()
+        {
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        };
 
         private readonly HttpClient _http;
         private readonly string _clientId;
@@ -32,32 +32,11 @@ namespace StravaApiLib
         private string? _accessToken;
         private DateTime _accessTokenExpiresAt;
 
-        /// <summary>
-        /// Default HTTP timeout in seconds for API requests.
-        /// </summary>
-        public int TimeoutSeconds { get; set; } = 30;
-
-        /// <summary>
-        /// Creates a new instance of the Strava API client.
-        /// </summary>
         /// <param name="clientId">Strava application client ID.</param>
         /// <param name="clientSecret">Strava application client secret.</param>
-        /// <param name="refreshToken">
-        /// OAuth refresh token obtained from the initial authorization flow.
-        /// This token is used to generate access tokens automatically.
-        /// </param>
-        /// <param name="timeOutSeconds">HTTP request timeout in seconds.</param>
-        /// <remarks>
-        /// If you need to perform the full OAuth authorization flow, use <see cref="GetAuthorizationUrl"/> to
-        /// obtain an authorization code and then call <see cref="ExchangeCodeAsync"/> to exchange the code for tokens.
-        /// </remarks>
-        /// <example>
-        /// <code>
-        /// var client = new StravaApi("yourClientId", "yourClientSecret", "yourRefreshToken", 60);
-        /// var athlete = await client.GetAthleteAsync();
-        /// </code>
-        /// </example>
-        public StravaApi(string clientId, string clientSecret, string refreshToken, int timeOutSeconds)
+        /// <param name="refreshToken">OAuth refresh token from the initial authorization flow.</param>
+        /// <param name="timeOutSeconds">HTTP request timeout in seconds (default 30).</param>
+        public StravaApi(string clientId, string clientSecret, string refreshToken, int timeOutSeconds = 30)
         {
             _http = new HttpClient
             {
@@ -69,15 +48,11 @@ namespace StravaApiLib
             _refreshToken = refreshToken;
         }
 
-        /// <summary>
-        /// Retrieves a valid access token using the refresh token flow.
-        /// Automatically caches the token until expiration.
-        /// </summary>
-        /// <returns>A valid access token string.</returns>
-        /// <exception cref="HttpRequestException">Thrown on network or non-success HTTP responses.</exception>
         private async Task<string> GetAccessTokenAsync()
         {
-            if (!string.IsNullOrEmpty(_accessToken) && DateTime.UtcNow < _accessTokenExpiresAt) return _accessToken;
+            if (!string.IsNullOrEmpty(_accessToken) && DateTime.UtcNow < _accessTokenExpiresAt)
+                return _accessToken;
+
             var response = await _http.PostAsync(OAuthUrl,
                 new FormUrlEncodedContent(new Dictionary<string, string>
                 {
@@ -96,153 +71,98 @@ namespace StravaApiLib
             return _accessToken!;
         }
 
-        /// <summary>
-        /// Returns the activities of an athlete for a specific identifier. Requires activity:read. 
-        /// Only Me activities will be filtered out unless requested by a token with activity:read_all.
-        /// </summary>
-        /// <param name="page">Page number (1-based).</param>
-        /// <param name="perPage">Number of items per page.</param>
-        /// <param name="before">Optional epoch seconds to only return activities before this time.</param>
-        /// <param name="after">Optional epoch seconds to only return activities after this time.</param>
-        /// <returns>A list of <see cref="ActivityDto"/> objects (may be empty).</returns>
-        public async Task<List<ActivityDto>> GetActivitiesAsync(int page = 1, int perPage = 30, long? before = null, long? after = null)
-        {
-            var url = $"athlete/activities?page={page}&per_page={perPage}";
-            if (before.HasValue) url += $"&before={before}";
-            if (after.HasValue) url += $"&after={after}";
-
-            return await GetAsync<List<ActivityDto>>(url) ?? new();
-        }
-
-        /// <summary>
-        /// Retrieves detailed information for a specific activity.
-        /// </summary>
-        /// <param name="activityId">Activity identifier.</param>
-        /// <param name="includeAllEfforts">Whether to include all segment efforts.</param>
-        /// <returns>An <see cref="ActivityDetailsDto"/> describing the activity.</returns>
-        public async Task<ActivityDetailsDto> GetActivityDetailsAsync(long activityId, bool includeAllEfforts = false)
-        {
-            return await GetAsync<ActivityDetailsDto>($"activities/{activityId}?include_all_efforts={includeAllEfforts.ToString().ToLower()}");
-        }
-
-        /// <summary>
-        /// Returns the currently authenticated athlete. 
-        /// Tokens with profile:read_all scope will receive a detailed athlete representation; all others will receive a summary representation.
-        /// </summary>
-        /// <returns>An <see cref="AthleteDto"/> describing the authenticated athlete.</returns>
-        public async Task<AthleteDto> GetAthleteAsync()
-        {
-            return await GetAsync<AthleteDto>("athlete");
-        }
-
-        /// <summary>
-        /// Returns the activity stats of an athlete. Only includes data from activities set to Everyone visibilty.
-        /// </summary>
-        /// <param name="athleteId">The identifier of the athlete. Must match the authenticated athlete.</param>
-        /// <returns>An <see cref="AthleteStatsDto"/> containing aggregated statistics for the athlete.</returns>
-        public async Task<AthleteStatsDto> GetAthleteStatsAsync(long athleteId)
-        {
-            return await GetAsync<AthleteStatsDto>($"athletes/{athleteId}/stats");
-        }
-
-        /// <summary>
-        /// Gets detailed information about a specific gear item (bike or shoes).
-        /// </summary>
-        /// <param name="gearId">Gear identifier from activity or athlete profile.</param>
-        /// <returns>A <see cref="GearDto"/> describing the gear item.</returns>
-        /// <exception cref="ArgumentException">Thrown when <paramref name="gearId"/> is null or empty.</exception>
-        public async Task<GearDto> GetGearAsync(string gearId)
-        {
-            if (string.IsNullOrWhiteSpace(gearId)) throw new ArgumentException("Gear ID cannot be null or empty.", nameof(gearId));
-
-            return await GetAsync<GearDto>($"gear/{gearId}");
-        }
-
-        /// <summary>
-        /// Returns a list of the routes created by the authenticated athlete. Private routes are filtered out unless requested by a token with read_all scope.
-        /// </summary>
-        /// <param name="athleteId">Athlete identifier.</param>
-        /// <param name="page">Page number. Defaults to 1.</param>
-        /// <param name="perPage">Number of items per page. Defaults to 30.</param>
-        /// <returns>A collection of <see cref="RouteDto"/> objects.</returns>
-        public async Task<List<RouteDto>> GetRoutesByAthleteIdAsync(long athleteId, int page = 1, int perPage = 30)
-        {
-            return await GetAsync<List<RouteDto>>($"athletes/{athleteId}/routes?page={page}&per_page={perPage}");
-        }
-
-        /// <summary>
-        /// Returns a route using its identifier. Requires read_all scope for private routes.
-        /// </summary>
-        /// <param name="routeId">Route identifier.</param>
-        /// <returns>An <see cref="RouteDto"/> object.</returns>
-        public async Task<RouteDto> GetRouteAsync(long routeId)
-        {
-            return await GetAsync<RouteDto>($"routes/{routeId}");
-        }
-
-        /// <summary>
-        /// Executes a GET request against the Strava API and deserializes the response.
-        /// </summary>
-        /// <typeparam name="T">Response DTO type.</typeparam>
-        /// <param name="url">Relative API URL (without base).</param>
-        /// <returns>Deserialized response object or default when the body is empty.</returns>
-        /// <exception cref="HttpRequestException">Thrown on network or non-success HTTP responses.</exception>
-        private async Task<T?> GetAsync<T>(string url)
+        private async Task<HttpRequestMessage> BuildRequestAsync(HttpMethod method, string url)
         {
             var token = await GetAccessTokenAsync();
-            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            var request = new HttpRequestMessage(method, url);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            return request;
+        }
 
+        private async Task<T?> GetAsync<T>(string url)
+        {
+            using var request = await BuildRequestAsync(HttpMethod.Get, url);
             var response = await _http.SendAsync(request);
             response.EnsureSuccessStatusCode();
+            return await response.Content.ReadFromJsonAsync<T>();
+        }
 
+        private async Task<byte[]> GetBytesAsync(string url)
+        {
+            using var request = await BuildRequestAsync(HttpMethod.Get, url);
+            var response = await _http.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadAsByteArrayAsync();
+        }
+
+        private async Task<T?> PostFormAsync<T>(string url, Dictionary<string, string> fields)
+        {
+            using var request = await BuildRequestAsync(HttpMethod.Post, url);
+            request.Content = new FormUrlEncodedContent(fields);
+            var response = await _http.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadFromJsonAsync<T>();
+        }
+
+        private async Task<T?> PostJsonAsync<T>(string url, object body)
+        {
+            using var request = await BuildRequestAsync(HttpMethod.Post, url);
+            request.Content = new StringContent(JsonSerializer.Serialize(body, _writeOptions), Encoding.UTF8, "application/json");
+            var response = await _http.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadFromJsonAsync<T>();
+        }
+
+        private async Task<T?> PostMultipartAsync<T>(string url, MultipartFormDataContent content)
+        {
+            using var request = await BuildRequestAsync(HttpMethod.Post, url);
+            request.Content = content;
+            var response = await _http.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadFromJsonAsync<T>();
+        }
+
+        private async Task<T?> PutFormAsync<T>(string url, Dictionary<string, string> fields)
+        {
+            using var request = await BuildRequestAsync(HttpMethod.Put, url);
+            request.Content = new FormUrlEncodedContent(fields);
+            var response = await _http.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadFromJsonAsync<T>();
+        }
+
+        private async Task<T?> PutJsonAsync<T>(string url, object body)
+        {
+            using var request = await BuildRequestAsync(HttpMethod.Put, url);
+            request.Content = new StringContent(JsonSerializer.Serialize(body, _writeOptions), Encoding.UTF8, "application/json");
+            var response = await _http.SendAsync(request);
+            response.EnsureSuccessStatusCode();
             return await response.Content.ReadFromJsonAsync<T>();
         }
 
         /// <summary>
-        /// Generates the Strava OAuth authorization URL.
+        /// Generates the Strava OAuth authorization URL to open in a browser.
+        /// After user approval, Strava redirects to <paramref name="redirectUri"/> with a <c>code</c> query parameter
+        /// that can be exchanged via <see cref="ExchangeCodeAsync"/>.
         /// </summary>
-        /// <param name="clientId">Your Strava application client ID.</param>
-        /// <param name="redirectUri">Redirect URI registered with your Strava app. Must match the redirect in Strava settings.</param>
-        /// <returns>The URL to open in the user's browser to start the OAuth authorization flow.</returns>
-        /// <remarks>
-        /// Open the returned URL in a browser. After the user approves access, Strava will redirect to <paramref name="redirectUri"/>
-        /// with a query parameter named <c>code</c>. That code can be exchanged for tokens using <see cref="ExchangeCodeAsync"/>.
-        /// </remarks>
-        /// <example>
-        /// <code>
-        /// var url = StravaApi.GetAuthorizationUrl("yourClientId", "https://yourapp/callback");
-        /// // Open url in browser, then exchange the returned code:
-        /// var (accessToken, refreshToken) = await StravaApi.ExchangeCodeAsync("yourClientId", "yourClientSecret", "theCodeFromCallback");
-        /// </code>
-        /// </example>
         public static string GetAuthorizationUrl(string clientId, string redirectUri)
         {
-            return
-                "https://www.strava.com/oauth/authorize" +
-                $"?client_id={clientId}" +
-                "&response_type=code" +
-                $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
-                "&approval_prompt=force" +
-                "&scope=read,activity:read_all,profile:read_all";
+            return "https://www.strava.com/oauth/authorize" +
+                   $"?client_id={clientId}" +
+                   "&response_type=code" +
+                   $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
+                   "&approval_prompt=force" +
+                   "&scope=read,activity:read_all,profile:read_all";
         }
 
         /// <summary>
-        /// Exchanges an authorization code for an access token and refresh token.
+        /// Exchanges an authorization code for access and refresh tokens.
         /// </summary>
-        /// <param name="clientId">Your Strava application client ID.</param>
-        /// <param name="clientSecret">Your Strava application client secret.</param>
-        /// <param name="code">Authorization code received from Strava after user consent.</param>
-        /// <returns>A tuple containing the <c>accessToken</c> and <c>refreshToken</c>.</returns>
-        /// <remarks>
-        /// This method should be called after the user completes the OAuth login and you receive the authorization code.
-        /// The authorization code is single-use and short-lived.
-        /// </remarks>
-        /// <exception cref="HttpRequestException">Thrown on network or non-success HTTP responses.</exception>
-        public static async Task<(string accessToken, string refreshToken)> ExchangeCodeAsync(string clientId, string clientSecret, string code)
+        /// <returns>A tuple of (accessToken, refreshToken).</returns>
+        public static async Task<(string accessToken, string refreshToken)> ExchangeCodeAsync(
+            string clientId, string clientSecret, string code)
         {
             using var http = new HttpClient();
-
             var response = await http.PostAsync(OAuthUrl,
                 new FormUrlEncodedContent(new Dictionary<string, string>
                 {
@@ -253,7 +173,6 @@ namespace StravaApiLib
                 }));
             response.EnsureSuccessStatusCode();
             var json = await response.Content.ReadFromJsonAsync<JsonElement>();
-
             return (json.GetProperty("access_token").GetString()!, json.GetProperty("refresh_token").GetString()!);
         }
     }
